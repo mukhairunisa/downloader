@@ -3,3 +3,5 @@ uvicorn
 yt-dlp
 requests
 python-dotenv
+jinja2
+multipart
