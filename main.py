@@ -21,7 +21,7 @@ templates = Jinja2Templates(directory="templates")
 RAPID_API_KEY = os.getenv("RAPIDAPI_KEY")
 RAPID_API_HOST = os.getenv("RAPIDAPI_HOST")
 # URL ini bisa berubah tergantung provider API yang Anda pilih di RapidAPI
-RAPID_API_URL = "https://social-media-video-downloader.p.rapidapi.com/smvd/get/all"
+RAPID_API_URL = "https://social-media-video-downloader.p.rapidapi.com"
 
 # Model Data Input
 class VideoRequest(BaseModel):
