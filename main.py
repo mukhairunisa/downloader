@@ -126,4 +126,9 @@ def home():
     return {"message": "Video Downloader API is Running. Use POST /api/download"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # HEROKU REQUIREMENT: Ambil port dari environment variable
+    # Jika tidak ada variable PORT (misal di local), pakai 8000
+    port = int(os.environ.get("PORT", 8000))
+    
+    # Host harus 0.0.0.0 agar bisa diakses publik
+    uvicorn.run(app, host="0.0.0.0", port=port)
