@@ -3,7 +3,7 @@ import uvicorn
 import yt_dlp
 import requests
 import json
-import re  # <--- Tambahan untuk Regex
+import re
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -12,23 +12,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="Hybrid Video Downloader (Fix YouTube API)")
+app = FastAPI(title="Hybrid Video Downloader (Final Fix)")
 
 templates = Jinja2Templates(directory="templates")
 
 # --- KONFIGURASI API ---
 RAPID_API_KEY = os.getenv("RAPIDAPI_KEY")
-RAPID_API_HOST = "social-media-video-downloader.p.rapidapi.com" # Host sesuai snippet Anda
+RAPID_API_HOST = "social-media-video-downloader.p.rapidapi.com"
 
 class VideoRequest(BaseModel):
     url: str
 
 # --- HELPER: Ekstrak ID YouTube ---
 def extract_youtube_id(url: str):
-    """
-    Mengambil ID video dari URL Youtube (Shorts/Watch/Mobile)
-    Contoh: https://youtu.be/z9oV-6-eP3Y -> z9oV-6-eP3Y
-    """
+    # Pola untuk berbagai jenis link YouTube (Shorts, Watch, youtu.be)
     regex = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
     match = re.search(regex, url)
     return match.group(1) if match else None
@@ -54,12 +51,10 @@ def get_local_link(url: str):
                 "download_url": info.get('url'),
                 "platform": info.get('extractor')
             }
-    except Exception as e:
-        error_msg = str(e).split('\n')[0]
-        print(f"❌ [Local Engine] Gagal: {error_msg}...")
+    except Exception:
         return None
 
-# --- ENGINE 2: EXTERNAL (RapidAPI - Modified) ---
+# --- ENGINE 2: EXTERNAL (RapidAPI) ---
 def get_rapidapi_link(url: str):
     print("🌍 [API Engine] Mengalihkan ke RapidAPI...")
     
@@ -72,80 +67,56 @@ def get_rapidapi_link(url: str):
         "X-RapidAPI-Host": RAPID_API_HOST
     }
 
-    # --- LOGIKA KHUSUS BERDASARKAN URL ---
-    
-    # KASUS 1: YOUTUBE (Sesuai snippet Anda)
+    # --- LOGIKA REQUEST ---
+    # API Anda memiliki endpoint khusus untuk YouTube
     if "youtube.com" in url or "youtu.be" in url:
         video_id = extract_youtube_id(url)
-        if not video_id:
-            print("❌ Gagal mengekstrak Video ID YouTube")
-            return None
-
-        # Endpoint baru sesuai snippet user
+        if not video_id: return None
+        
         api_url = f"https://{RAPID_API_HOST}/youtube/v3/video/details"
         querystring = {
             "videoId": video_id,
-            "renderableFormats": "720p,highres", # Meminta kualitas HD
-            "urlAccess": "proxied",
+            "renderableFormats": "720p,highres", 
+            "urlAccess": "proxied", 
             "getTranscript": "false"
         }
-    
-    # KASUS 2: TIKTOK/LAINNYA (Fallback ke endpoint umum jika ada)
     else:
-        # Kita coba endpoint umum, jika gagal nanti user harus beri snippet TikTok juga
-        api_url = f"https://{RAPID_API_HOST}/smvd/get/all" 
+        # Fallback untuk TikTok/IG (Menggunakan endpoint umum)
+        api_url = f"https://{RAPID_API_HOST}/smvd/get/all"
         querystring = {"url": url}
 
     try:
-        print(f"   ➡️ Requesting: {api_url}")
-        if "youtube" in url: print(f"   ➡️ Params: {querystring}")
-        
         response = requests.get(api_url, headers=headers, params=querystring)
         data = response.json()
         
-        # --- DEBUG LOG (PENTING: Cek log ini nanti) ---
-        print(f"   📩 RAW RESPONSE: {json.dumps(data)}") 
-        # ----------------------------------------------
-
-        # LOGIKA PARSING (Mencoba menebak struktur respon baru)
+        # --- LOGIKA PARSING BARU (SESUAI LOG JSON ANDA) ---
         
-        # Pola 1: Langsung ada link (Umum)
-        if 'links' in data and len(data['links']) > 0:
+        # 1. Ambil Metadata (Judul & Gambar)
+        metadata = data.get('metadata', {})
+        title = metadata.get('title', 'Video Download')
+        thumbnail = metadata.get('thumbnailUrl', '')
+
+        # 2. Ambil Link Video
+        # Struktur JSON Anda: data['contents'][0]['videos'][0]['url']
+        download_url = None
+        
+        if 'contents' in data and len(data['contents']) > 0:
+            content_item = data['contents'][0]
+            if 'videos' in content_item and len(content_item['videos']) > 0:
+                # Ambil video pertama (biasanya kualitas tertinggi/1080p sesuai urutan JSON)
+                download_url = content_item['videos'][0]['url']
+        
+        # Cek apakah berhasil mendapatkan URL
+        if download_url:
             return {
                 "source": "RapidAPI",
-                "title": data.get('title', 'Video Downloaded'),
-                "thumbnail": data.get('picture', ''),
-                "download_url": data['links'][0]['link'],
-                "platform": "RapidAPI"
+                "title": title,
+                "thumbnail": thumbnail,
+                "download_url": download_url,
+                "platform": "YouTube (API)"
             }
-            
-        # Pola 2: Struktur YouTube Details (Biasanya ada di streamingData atau formats)
-        # Karena kita belum tahu pasti output JSON-nya, kita coba cari key umum 'url'
-        # atau kita kembalikan raw data URL jika ada di root.
         
-        # Coba cari URL di dalam dictionary (Deep Search sederhana)
-        # Ini langkah darurat: mencari string "http" pertama di JSON respon
-        if "youtube" in url:
-            # Biasanya respon API youtube wrapper mengembalikan list format
-            if 'formats' in data:
-                 return {
-                    "source": "RapidAPI YouTube",
-                    "title": data.get('title', 'YouTube Video'),
-                    "thumbnail": data.get('thumbnail', {}).get('url', ''),
-                    "download_url": data['formats'][0]['url'], # Ambil format pertama
-                    "platform": "YouTube API"
-                }
-            # Jika responnya single object dengan key 'url'
-            elif 'url' in data:
-                 return {
-                    "source": "RapidAPI YouTube",
-                    "title": data.get('title', 'YouTube Video'),
-                    "thumbnail": data.get('thumbnail', ''),
-                    "download_url": data['url'],
-                    "platform": "YouTube API"
-                }
-
-        print("   ❌ Gagal mengenali struktur JSON respon (Cek log RAW RESPONSE).")
+        print("❌ Gagal Parsing: Tidak ada link video di dalam 'contents'")
         return None
 
     except Exception as e:
@@ -156,16 +127,14 @@ def get_rapidapi_link(url: str):
 @app.post("/api/download")
 async def download_video_api(request: VideoRequest):
     url = request.url
-    print(f"\n📥 New Request: {url}")
-    
     result = None
 
-    # Routing
+    # Routing Cerdas
     if "youtube.com" in url or "youtu.be" in url:
-        # YouTube: API Wajib (Local gagal di Heroku)
+        # YouTube wajib pakai API (Local diblokir Heroku)
         result = get_rapidapi_link(url)
     else:
-        # Lainnya: Coba Local dulu
+        # TikTok/Lainnya coba Local dulu (Gratis)
         result = get_local_link(url)
         if not result:
             result = get_rapidapi_link(url)
@@ -173,7 +142,7 @@ async def download_video_api(request: VideoRequest):
     if result:
         return result
     else:
-        raise HTTPException(status_code=400, detail="Gagal. Cek log server untuk melihat respons API.")
+        raise HTTPException(status_code=400, detail="Gagal mengambil video. Pastikan link valid.")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
