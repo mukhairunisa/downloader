@@ -3,54 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youtube Downloader</title>
+    <title>Video Downloader</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        body { font-family: 'Poppins', sans-serif; }
+        
+        /* Efek Kaca (Glassmorphism) */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animasi Loading */
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6366f1; /* Indigo-500 */
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Area Iklan (Placeholder Pattern) */
+        .ad-placeholder {
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.1) 10px,
+                rgba(255, 255, 255, 0.1) 20px
+            );
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+<body class="bg-[#0f172a] text-white min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
 
-    <div class="w-full max-w-xl bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700">
-        <h1 class="text-2xl font-bold text-center mb-2 text-blue-400">Video Downloader Pro</h1>
-        <p class="text-center text-slate-400 mb-6 text-sm">Download HD, SD, atau Audio Only</p>
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-[-10%] right-[-10%] w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-20 w-96 h-96 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
 
-        <div class="flex flex-col gap-3">
-            <input type="text" id="videoUrl" placeholder="Tempel link YouTube/TikTok..." 
-                class="w-full p-3 rounded-lg bg-slate-900 border border-slate-600 focus:border-blue-500 focus:outline-none text-white placeholder-slate-500 transition">
+    <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <div class="lg:col-span-4 order-2 lg:order-1 flex flex-col gap-4">
             
-            <button onclick="downloadVideo()" id="btnDownload"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 flex justify-center items-center gap-2">
-                <span>Cari Video</span>
-                <div id="loading" class="loader hidden"></div>
-            </button>
+            <div class="glass-panel rounded-2xl p-4 h-full min-h-[300px] flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                <div class="absolute inset-0 ad-placeholder opacity-50"></div>
+                <div class="z-10 relative">
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-2">Space Iklan</p>
+                    <p class="text-[10px] text-slate-500">Pasang Adsense / Banner Disini<br>(300x600px)</p>
+                </div>
+                </div>
+
+            <div class="glass-panel rounded-2xl p-6 text-slate-300 text-sm">
+                <h4 class="font-bold text-white mb-2">💡 Tips</h4>
+                <p>Gunakan link dari tombol "Share" > "Copy Link" untuk hasil terbaik.</p>
+            </div>
         </div>
 
-        <div id="errorArea" class="hidden mt-4 text-center text-red-400 bg-red-900/20 p-3 rounded border border-red-900 text-sm"></div>
+        <div class="lg:col-span-8 order-1 lg:order-2">
+            <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+                
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                        Universal Downloader
+                    </h1>
+                    <p class="text-slate-400 text-sm sm:text-base">
+                        Simpan video favoritmu dari YouTube, TikTok, & FB dalam sekejap.
+                    </p>
+                </div>
 
-        <div id="resultArea" class="hidden mt-8 animate-fade-in">
-            <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                <img id="thumb" src="" alt="Thumb" class="w-full sm:w-1/3 h-24 object-cover rounded-lg border border-slate-600">
-                <div class="flex-1">
-                    <h3 id="videoTitle" class="text-sm font-semibold line-clamp-2 mb-1">Judul Video</h3>
-                    <span id="sourceTag" class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">YouTube</span>
+                <div class="relative group z-10">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
+                    <div class="relative flex flex-col sm:flex-row gap-2 bg-slate-900 rounded-xl p-2">
+                        <input type="text" id="videoUrl" 
+                            placeholder="Tempel link video disini..." 
+                            class="w-full bg-transparent text-white p-3 focus:outline-none placeholder-slate-500 text-sm sm:text-base">
+                        
+                        <button onclick="downloadVideo()" id="btnDownload"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-8 rounded-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30">
+                            <span>Download</span>
+                            <div id="loading" class="loader hidden"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="errorArea" class="hidden mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-200 text-center text-sm animate-pulse">
+                </div>
+
+                <div id="resultArea" class="hidden mt-8 border-t border-slate-700/50 pt-8 animate-fade-in-up">
+                    <div class="flex flex-col sm:flex-row gap-6">
+                        <div class="w-full sm:w-5/12">
+                            <div class="relative rounded-xl overflow-hidden shadow-lg group">
+                                <img id="thumb" src="" alt="Thumbnail" class="w-full h-auto object-cover transform group-hover:scale-105 transition duration-500">
+                                <div class="absolute top-2 left-2">
+                                    <span id="sourceTag" class="bg-black/60 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded">SOURCE</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full sm:w-7/12 flex flex-col">
+                            <h3 id="videoTitle" class="font-bold text-lg leading-tight mb-4 text-white line-clamp-2"></h3>
+                            
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-3">Pilih Format:</p>
+                                <div id="downloadButtons" class="grid gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <p class="text-[10px] text-slate-500">
+                        &copy; 2024 Lukman Digital Solution. Gunakan dengan bijak.
+                    </p>
                 </div>
             </div>
-
-            <div class="space-y-2">
-                <p class="text-xs text-slate-400 uppercase tracking-wider font-bold mb-2">Pilih Kualitas:</p>
-                <div id="downloadButtons" class="grid gap-2">
-                    </div>
-            </div>
         </div>
+        
     </div>
 
     <script>
@@ -65,18 +142,19 @@
             // Reset UI
             resultArea.classList.add('hidden');
             errorArea.classList.add('hidden');
-            buttonsContainer.innerHTML = ""; // Bersihkan tombol lama
+            buttonsContainer.innerHTML = ""; 
 
             if (!urlInput) {
-                errorArea.innerText = "Masukkan link dulu bos!";
+                errorArea.innerText = "⚠️ Link tidak boleh kosong!";
                 errorArea.classList.remove('hidden');
                 return;
             }
 
-            // UI Loading
+            // Loading State
             btn.disabled = true;
-            btn.firstElementChild.innerText = "Sedang Mencari...";
+            btn.firstElementChild.innerText = "Proses...";
             loader.classList.remove('hidden');
+            btn.classList.add('opacity-75');
 
             try {
                 const response = await fetch('/api/download', {
@@ -88,39 +166,45 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Isi Data Video
+                    // Populate Data
                     document.getElementById('videoTitle').innerText = data.title;
                     document.getElementById('thumb').src = data.thumbnail;
-                    document.getElementById('sourceTag').innerText = data.source || "Video";
+                    document.getElementById('sourceTag').innerText = (data.source || "Video").toUpperCase();
 
-                    // Buat Tombol-Tombol
+                    // Generate Buttons
                     if (data.downloads && data.downloads.length > 0) {
                         data.downloads.forEach(item => {
-                            // Tentukan warna tombol berdasarkan tipe
-                            let btnColor = "bg-slate-700 hover:bg-slate-600 border-slate-600";
-                            let icon = "🎥";
-                            
-                            if (item.label.includes("1080p")) {
-                                btnColor = "bg-green-600 hover:bg-green-500 border-green-500 shadow-green-900/50 shadow-lg"; 
-                                icon = "🌟 HD";
-                            } else if (item.type === "audio") {
-                                btnColor = "bg-purple-600 hover:bg-purple-500 border-purple-500";
-                                icon = "🎵";
+                            let btnClass = "bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-slate-200";
+                            let icon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+                            let badgeClass = "bg-slate-600 text-slate-300";
+
+                            // Styling khusus untuk kualitas tinggi
+                            if (item.label.includes("1080p") || item.label.includes("720p")) {
+                                btnClass = "bg-emerald-600 hover:bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-900/20";
+                                icon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 3.214L13 21l-2.286-6.857L5 12l5.714-3.214L13 3z"></path></svg>`;
+                                badgeClass = "bg-emerald-800 text-emerald-100";
+                            } 
+                            // Styling khusus Audio
+                            else if (item.type === "audio") {
+                                btnClass = "bg-violet-600 hover:bg-violet-500 border-violet-500 text-white";
+                                icon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>`;
+                                badgeClass = "bg-violet-800 text-violet-100";
                             }
 
-                            // Template HTML Tombol
-                            const btnHtml = `
+                            const html = `
                                 <a href="${item.url}" target="_blank" 
-                                   class="${btnColor} border text-white p-3 rounded-lg flex justify-between items-center transition group text-sm font-medium">
-                                    <div class="flex items-center gap-2">
-                                        <span>${icon}</span>
-                                        <span>${item.label}</span>
-                                        <span class="text-xs bg-black/20 px-2 py-0.5 rounded uppercase">${item.ext}</span>
+                                   class="${btnClass} border p-3 rounded-lg flex items-center justify-between transition-all group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 rounded-md bg-black/20">${icon}</div>
+                                        <div class="text-left">
+                                            <div class="text-sm font-bold">${item.label}</div>
+                                            <div class="text-[10px] opacity-70 uppercase">${item.ext}</div>
+                                        </div>
                                     </div>
-                                    <span class="text-xs text-slate-200">${item.size}</span>
+                                    <span class="text-xs font-mono ${badgeClass} px-2 py-1 rounded">${item.size}</span>
                                 </a>
                             `;
-                            buttonsContainer.innerHTML += btnHtml;
+                            buttonsContainer.innerHTML += html;
                         });
                         resultArea.classList.remove('hidden');
                     } else {
@@ -132,14 +216,28 @@
                 }
 
             } catch (error) {
-                errorArea.innerText = "Error: " + error.message;
+                errorArea.innerHTML = `<strong>Oops!</strong> ${error.message}`;
                 errorArea.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
-                btn.firstElementChild.innerText = "Cari Video";
+                btn.firstElementChild.innerText = "Download";
                 loader.classList.add('hidden');
+                btn.classList.remove('opacity-75');
             }
         }
     </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+        
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+    </style>
 </body>
 </html>
