@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One Video Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-lg bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
+        <h1 class="text-3xl font-bold text-center mb-2 text-blue-400">Video Downloader</h1>
+        <p class="text-center text-slate-400 mb-8 text-sm">Download TikTok, YouTube, FB tanpa ribet.</p>
+
+        <div class="space-y-4">
+            <input type="text" id="videoUrl" placeholder="Tempel link video di sini..." 
+                class="w-full p-4 rounded-lg bg-slate-900 border border-slate-600 focus:border-blue-500 focus:outline-none text-white placeholder-slate-500 transition">
+            
+            <button onclick="downloadVideo()" id="btnDownload"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 flex justify-center items-center">
+                <span id="btnText">Download Video</span>
+                <div id="loading" class="loader hidden ml-2"></div>
+            </button>
+        </div>
+
+        <div id="resultArea" class="hidden mt-8 p-4 bg-slate-900 rounded-lg border border-slate-700 animate-pulse">
+            <div class="flex flex-col items-center">
+                <img id="thumb" src="" alt="Thumbnail" class="w-full h-48 object-cover rounded-md mb-4 hidden">
+                <h3 id="videoTitle" class="text-lg font-semibold text-center mb-2 line-clamp-2"></h3>
+                <span id="platformTag" class="bg-green-600 text-xs px-2 py-1 rounded mb-4"></span>
+                
+                <a id="downloadLink" href="#" target="_blank" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-bold transition flex items-center">
+                    ⬇️ Download MP4
+                </a>
+            </div>
+        </div>
+
+        <div id="errorArea" class="hidden mt-4 text-center text-red-400 bg-red-900/20 p-3 rounded border border-red-900">
+            Link tidak valid atau server sedang sibuk.
+        </div>
+    </div>
+
+    <footer class="mt-8 text-slate-600 text-xs">
+        &copy; 2024 Lukman Digital Solution
+    </footer>
+
+    <script>
+        async function downloadVideo() {
+            const urlInput = document.getElementById('videoUrl').value;
+            const btn = document.getElementById('btnDownload');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loading');
+            const resultArea = document.getElementById('resultArea');
+            const errorArea = document.getElementById('errorArea');
+
+            // Reset UI
+            resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+            resultArea.classList.remove('animate-pulse'); // remove animation placeholder
+            
+            if (!urlInput) {
+                alert("Harap masukkan link URL!");
+                return;
+            }
+
+            // Loading State
+            btn.disabled = true;
+            btnText.innerText = "Memproses...";
+            loader.classList.remove('hidden');
+            btn.classList.add('opacity-75');
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    document.getElementById('videoTitle').innerText = data.title;
+                    document.getElementById('platformTag').innerText = data.platform || "Video";
+                    document.getElementById('downloadLink').href = data.download_url;
+                    
+                    if(data.thumbnail){
+                        const thumb = document.getElementById('thumb');
+                        thumb.src = data.thumbnail;
+                        thumb.classList.remove('hidden');
+                    }
+                    
+                    resultArea.classList.remove('hidden');
+                } else {
+                    // Error dari server
+                    throw new Error(data.detail || "Gagal mengambil data");
+                }
+
+            } catch (error) {
+                errorArea.innerText = "Error: " + error.message;
+                errorArea.classList.remove('hidden');
+            } finally {
+                // Restore Button
+                btn.disabled = false;
+                btnText.innerText = "Download Video";
+                loader.classList.add('hidden');
+                btn.classList.remove('opacity-75');
+            }
+        }
+    </script>
+</body>
+</html>
