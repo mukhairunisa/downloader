@@ -2,33 +2,31 @@ import os
 import uvicorn
 import yt_dlp
 import requests
+import json
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# 1. Load Environment Variables (API Key, dll)
+# 1. Load Environment Variables
 load_dotenv()
 
-app = FastAPI(title="All-in-One Video Downloader")
+app = FastAPI(title="All-in-One Video Downloader (Debug Mode)")
 
-# 2. Setup Folder Templates (Untuk Frontend HTML)
-# Pastikan Anda sudah membuat folder 'templates' dan file 'index.html' di dalamnya
+# 2. Setup Folder Templates
 templates = Jinja2Templates(directory="templates")
 
 # --- KONFIGURASI API EKSTERNAL ---
 RAPID_API_KEY = os.getenv("RAPIDAPI_KEY")
 RAPID_API_HOST = os.getenv("RAPIDAPI_HOST")
-# URL ini bisa berubah tergantung provider API yang Anda pilih di RapidAPI
-RAPID_API_URL = "https://social-media-video-downloader.p.rapidapi.com"
+# URL Default (Social Media Video Downloader)
+RAPID_API_URL = "https://social-media-video-downloader.p.rapidapi.com/smvd/get/all"
 
-# Model Data Input
 class VideoRequest(BaseModel):
     url: str
 
 # --- ENGINE 1: LOCAL (yt-dlp) ---
-# Gratis, menggunakan resources server sendiri.
 def get_local_link(url: str):
     print(f"⚙️  [Local Engine] Memproses: {url}")
     
@@ -36,7 +34,6 @@ def get_local_link(url: str):
         'format': 'best',
         'quiet': True,
         'noplaylist': True,
-        # Menyamar sebagai Browser Chrome agar tidak diblokir ringan
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         }
@@ -44,26 +41,27 @@ def get_local_link(url: str):
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Ekstrak info tanpa download file (hemat storage server)
             info = ydl.extract_info(url, download=False)
             return {
-                "source": "Local Server",
+                "source": "Local Server (yt-dlp)",
                 "title": info.get('title'),
                 "thumbnail": info.get('thumbnail'),
-                "download_url": info.get('url'), # Direct link ke file video
+                "download_url": info.get('url'),
                 "platform": info.get('extractor')
             }
     except Exception as e:
-        print(f"❌ [Local Engine] Gagal: {e}")
+        # Kita hanya print error pendek agar log tidak penuh sampah
+        error_msg = str(e).split('\n')[0] 
+        print(f"❌ [Local Engine] Gagal: {error_msg}...")
         return None
 
 # --- ENGINE 2: EXTERNAL (RapidAPI) ---
-# Berbayar/Terbatas, tapi lebih ampuh tembus blokir (terutama YouTube).
+# FUNGSI INI SUDAH DITAMBAHKAN DEBUG LOG
 def get_rapidapi_link(url: str):
     print("🌍 [API Engine] Mengalihkan ke RapidAPI...")
     
     if not RAPID_API_KEY:
-        print("⚠️  API Key belum disetting di .env atau Config Vars!")
+        print("⚠️  CRITICAL: API Key belum disetting di Heroku Config Vars!")
         return None
 
     querystring = {"url": url}
@@ -73,12 +71,26 @@ def get_rapidapi_link(url: str):
     }
 
     try:
+        print(f"   ➡️ Requesting to URL: {RAPID_API_URL}")
         response = requests.get(RAPID_API_URL, headers=headers, params=querystring)
-        data = response.json()
         
-        # Parsing JSON response (Sesuaikan dengan dokumentasi API yang Anda pakai)
-        if 'links' in data:
-            # Mengambil link kualitas terbaik (biasanya index pertama)
+        # --- DEBUGGING AREA (Cek Log Heroku Bagian Ini) ---
+        try:
+            data = response.json()
+            print(f"   📩 RAW RESPONSE API: {json.dumps(data)}") # Ini akan mencetak jawaban asli API
+        except:
+            print(f"   ❌ Gagal parsing JSON. Status Code: {response.status_code}")
+            print(f"   ❌ Isi Response: {response.text}")
+            return None
+        # --------------------------------------------------
+
+        # Cek Error dari API (Biasanya kalau salah key ada field 'message')
+        if "message" in data and not "links" in data:
+            print(f"   ⚠️ API Error Message: {data['message']}")
+            return None
+
+        # Logika Parsing (Sesuaikan dengan Social Media Video Downloader)
+        if 'links' in data and len(data['links']) > 0:
             best_link = data['links'][0]['link']
             return {
                 "source": "RapidAPI",
@@ -87,55 +99,49 @@ def get_rapidapi_link(url: str):
                 "download_url": best_link,
                 "platform": "External API"
             }
+        
+        print("   ❌ Key 'links' tidak ditemukan atau kosong.")
         return None
+
     except Exception as e:
-        print(f"❌ [API Engine] Error: {e}")
+        print(f"❌ [API Engine] Connection Error: {e}")
         return None
 
 # --- ROUTES ---
 
-# 1. Route API (Logic Download)
 @app.post("/api/download")
 async def download_video_api(request: VideoRequest):
     url = request.url
     result = None
 
-    # LOGIKA ROUTING CERDAS
-    
-    # KASUS A: YouTube (Sering memblokir server datacenter/Heroku)
-    # Langsung lempar ke API eksternal untuk hemat waktu dan menghindari error
+    print(f"\n📥 New Request: {url}")
+
+    # LOGIKA PRIORITAS
+    # 1. Jika YouTube, Pakai API Dulu (Karena Local pasti gagal di Heroku)
     if "youtube.com" in url or "youtu.be" in url:
         result = get_rapidapi_link(url)
-        # Jika API gagal/habis kuota, baru coba cara lokal sebagai cadangan
         if not result:
+            print("   ↪️ API gagal, mencoba fallback ke Local...")
             result = get_local_link(url)
-
-    # KASUS B: TikTok, Facebook, Instagram, Twitter
-    # Coba cara Lokal dulu (Gratis & Cepat)
+            
+    # 2. Jika TikTok/Lainnya, Coba Local Dulu (Lebih Cepat & Gratis)
     else:
         result = get_local_link(url)
-        # Jika cara lokal gagal (kena blokir/captcha), baru minta bantuan API
         if not result:
+            print("   ↪️ Local gagal, mencoba fallback ke API...")
             result = get_rapidapi_link(url)
 
-    # HASIL AKHIR
     if result:
+        print("✅ Success!")
         return result
     else:
-        # Jika kedua cara gagal
-        raise HTTPException(status_code=400, detail="Gagal mengambil video. Link mungkin private, dihapus, atau server sedang sibuk.")
+        print("❌ All engines failed.")
+        raise HTTPException(status_code=400, detail="Gagal mengambil video. Cek Log Server untuk detail debug.")
 
-# 2. Route Frontend (Menampilkan HTML)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    # Render file index.html yang ada di folder templates
     return templates.TemplateResponse("index.html", {"request": request})
 
-# --- MAIN EXECUTION ---
 if __name__ == "__main__":
-    # Konfigurasi Port untuk Heroku
-    # Heroku akan menyuntikkan variable PORT ke environment
     port = int(os.environ.get("PORT", 8000))
-    
-    # Jalankan Server
     uvicorn.run(app, host="0.0.0.0", port=port)
