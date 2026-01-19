@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="Hybrid Video Downloader (Final Fix)")
+app = FastAPI(title="Multi-Format Video Downloader")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -23,18 +23,18 @@ RAPID_API_HOST = "social-media-video-downloader.p.rapidapi.com"
 class VideoRequest(BaseModel):
     url: str
 
-# --- HELPER: Ekstrak ID YouTube ---
+# --- HELPER ---
 def extract_youtube_id(url: str):
-    # Pola untuk berbagai jenis link YouTube (Shorts, Watch, youtu.be)
     regex = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
     match = re.search(regex, url)
     return match.group(1) if match else None
 
 # --- ENGINE 1: LOCAL (yt-dlp) ---
+# Kita sesuaikan agar outputnya format LIST juga, biar frontend tidak bingung
 def get_local_link(url: str):
     print(f"⚙️  [Local Engine] Memproses: {url}")
     ydl_opts = {
-        'format': 'best',
+        'format': 'best', # Default ambil yang terbaik saja
         'quiet': True,
         'noplaylist': True,
         'http_headers': {
@@ -48,8 +48,15 @@ def get_local_link(url: str):
                 "source": "Local Server",
                 "title": info.get('title'),
                 "thumbnail": info.get('thumbnail'),
-                "download_url": info.get('url'),
-                "platform": info.get('extractor')
+                "downloads": [
+                    {
+                        "label": "Best Quality",
+                        "size": "Auto",
+                        "ext": info.get('ext', 'mp4'),
+                        "url": info.get('url'),
+                        "type": "video"
+                    }
+                ]
             }
     except Exception:
         return None
@@ -67,8 +74,7 @@ def get_rapidapi_link(url: str):
         "X-RapidAPI-Host": RAPID_API_HOST
     }
 
-    # --- LOGIKA REQUEST ---
-    # API Anda memiliki endpoint khusus untuk YouTube
+    # Request Logic
     if "youtube.com" in url or "youtu.be" in url:
         video_id = extract_youtube_id(url)
         if not video_id: return None
@@ -76,12 +82,12 @@ def get_rapidapi_link(url: str):
         api_url = f"https://{RAPID_API_HOST}/youtube/v3/video/details"
         querystring = {
             "videoId": video_id,
-            "renderableFormats": "720p,highres", 
+            "renderableFormats": "720p,1080p", # Request format HD
             "urlAccess": "proxied", 
             "getTranscript": "false"
         }
     else:
-        # Fallback untuk TikTok/IG (Menggunakan endpoint umum)
+        # Fallback TikTok/IG
         api_url = f"https://{RAPID_API_HOST}/smvd/get/all"
         querystring = {"url": url}
 
@@ -89,34 +95,55 @@ def get_rapidapi_link(url: str):
         response = requests.get(api_url, headers=headers, params=querystring)
         data = response.json()
         
-        # --- LOGIKA PARSING BARU (SESUAI LOG JSON ANDA) ---
+        # --- PARSING MULTI-FORMAT ---
         
-        # 1. Ambil Metadata (Judul & Gambar)
         metadata = data.get('metadata', {})
         title = metadata.get('title', 'Video Download')
         thumbnail = metadata.get('thumbnailUrl', '')
+        
+        downloads_list = []
 
-        # 2. Ambil Link Video
-        # Struktur JSON Anda: data['contents'][0]['videos'][0]['url']
-        download_url = None
-        
+        # 1. PARSING VIDEO (Cari 1080p, 720p, 480p, 360p)
         if 'contents' in data and len(data['contents']) > 0:
-            content_item = data['contents'][0]
-            if 'videos' in content_item and len(content_item['videos']) > 0:
-                # Ambil video pertama (biasanya kualitas tertinggi/1080p sesuai urutan JSON)
-                download_url = content_item['videos'][0]['url']
-        
-        # Cek apakah berhasil mendapatkan URL
-        if download_url:
+            content = data['contents'][0]
+            
+            # Loop semua video yang tersedia
+            if 'videos' in content:
+                for v in content['videos']:
+                    label = v.get('label', 'Video') # Contoh: "1080p", "720p"
+                    
+                    # Filter: Hanya ambil kualitas yang diinginkan
+                    if label in ['1080p', '720p', '480p', '360p']:
+                        downloads_list.append({
+                            "label": label,
+                            "size": v.get('metadata', {}).get('content_length_text', 'N/A'),
+                            "ext": "mp4",
+                            "url": v['url'],
+                            "type": "video"
+                        })
+
+            # 2. PARSING AUDIO (Audio Only)
+            if 'audios' in content:
+                for a in content['audios']:
+                    # Biasanya kita ambil yang kualitas Medium/High saja
+                    quality = a.get('metadata', {}).get('audio_quality', 'AUDIO')
+                    if quality != "AUDIO_QUALITY_LOW": # Filter low quality audio
+                        downloads_list.append({
+                            "label": "Audio Only",
+                            "size": a.get('metadata', {}).get('content_length_text', 'N/A'),
+                            "ext": "mp3",
+                            "url": a['url'],
+                            "type": "audio"
+                        })
+
+        if len(downloads_list) > 0:
             return {
                 "source": "RapidAPI",
                 "title": title,
                 "thumbnail": thumbnail,
-                "download_url": download_url,
-                "platform": "YouTube (API)"
+                "downloads": downloads_list # Mengembalikan list, bukan single url
             }
         
-        print("❌ Gagal Parsing: Tidak ada link video di dalam 'contents'")
         return None
 
     except Exception as e:
@@ -129,12 +156,9 @@ async def download_video_api(request: VideoRequest):
     url = request.url
     result = None
 
-    # Routing Cerdas
     if "youtube.com" in url or "youtu.be" in url:
-        # YouTube wajib pakai API (Local diblokir Heroku)
         result = get_rapidapi_link(url)
     else:
-        # TikTok/Lainnya coba Local dulu (Gratis)
         result = get_local_link(url)
         if not result:
             result = get_rapidapi_link(url)
@@ -142,7 +166,7 @@ async def download_video_api(request: VideoRequest):
     if result:
         return result
     else:
-        raise HTTPException(status_code=400, detail="Gagal mengambil video. Pastikan link valid.")
+        raise HTTPException(status_code=400, detail="Gagal mengambil video.")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
