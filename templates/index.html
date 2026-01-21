@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <meta name="description" content="Download video YouTube, TikTok tanpa watermark, dan Facebook HD secara gratis. Pengunduh video online terbaik, cepat, dan mendukung format MP3 & MP4.">
+    <meta name="keywords" content="download video youtube, download tiktok tanpa watermark, savefrom, snaptik, download video fb, youtube to mp3, pengunduh video online">
     <link rel="icon" type="image/png" href="/static/logo.png">
-
-    <meta name="description" content="Download video YouTube, TikTok tanpa watermark, dan Facebook HD secara gratis. Pengunduh video online terbaik, cepat, MP3 & MP4.">
-    <meta name="keywords" content="download video youtube, download tiktok tanpa watermark, savefrom, snaptik, download video fb, youtube to mp3">
-    
     <script src="https://conscientiouscabbageadrift.com/f9/ac/c0/f9acc00edd9dae1d236742dc62806481.js"></script>
     
-    <title>Video Downloader - Gratis & Tanpa Watermark</title>
+    <title>Video Downloader - YouTube, TikTok & Facebook (Tanpa Watermark)</title>
     <style>
-        /* --- RESET --- */
+        /* --- RESET DASAR --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
@@ -29,65 +26,22 @@
 
         .container {
             width: 100%;
-            max-width: 750px;
+            max-width: 800px; /* Sedikit diperlebar untuk menampung teks SEO */
             margin: 0 auto;
         }
 
         .main-content {
             background: #fff;
-            padding: 40px 30px;
+            padding: 30px;
             border: 1px solid #ddd;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            text-align: center; /* Agar logo & judul tengah */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        /* --- LOGO UTAMA --- */
-        .site-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 16px; /* Membuat sudut melengkung seperti icon app */
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        /* --- UI ELEMENTS --- */
-        h1 { font-size: 26px; margin-bottom: 5px; color: #1a1a1a; font-weight: 800; }
-        p.subtitle { color: #666; font-size: 15px; margin-bottom: 30px; }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        input[type="text"] {
-            flex-grow: 1;
-            padding: 14px 15px;
-            border: 2px solid #eee;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus { border-color: #007bff; outline: none; }
-
-        button.btn-primary {
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        button.btn-primary:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-
-        /* --- IKLAN NATIVE --- */
+        /* --- AREA IKLAN NATIVE --- */
         .native-ad-container {
-            margin: 20px 0;
+            margin-top: 25px;
+            margin-bottom: 25px;
             padding: 10px;
             background: #fafafa;
             border: 1px dashed #e0e0e0;
@@ -98,13 +52,48 @@
             align-items: center;
         }
 
-        /* --- HASIL DOWNLOAD --- */
+        /* --- ELEMEN UI --- */
+        h1 { font-size: 28px; margin-bottom: 10px; color: #1a1a1a; text-align: center; font-weight: 700; }
+        p.subtitle { color: #666; font-size: 16px; margin-bottom: 30px; text-align: center; }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 14px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button.btn-primary {
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button.btn-primary:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
         #resultArea {
             margin-top: 30px;
             border-top: 1px solid #eee;
             padding-top: 20px;
             display: none; 
-            text-align: left; /* Kembalikan text ke kiri untuk hasil */
         }
 
         .video-info {
@@ -112,59 +101,61 @@
             gap: 20px;
             margin-bottom: 20px;
             align-items: flex-start;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
         }
 
         .thumb-img {
-            width: 120px;
-            height: 68px;
+            width: 140px;
+            height: 80px;
             object-fit: cover;
             border-radius: 6px;
             background: #eee;
             flex-shrink: 0;
         }
 
-        .video-details h3 { font-size: 15px; margin-bottom: 5px; line-height: 1.4; }
-        .badge { padding: 2px 6px; font-size: 10px; font-weight: bold; background: #e2e6ea; border-radius: 4px; color: #555; }
+        .video-details h3 { font-size: 16px; margin-bottom: 8px; line-height: 1.4; }
+        .badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; background: #e9ecef; border-radius: 4px; color: #495057; }
 
         .download-list { display: grid; gap: 10px; }
+
         .dl-btn {
             display: flex; justify-content: space-between; align-items: center; text-decoration: none;
-            padding: 12px 15px; border-radius: 6px; font-size: 14px; font-weight: 500;
+            padding: 12px 15px; border-radius: 6px; font-size: 14px; font-weight: 500; transition: transform 0.1s;
         }
-        .dl-btn-gray { background: #fff; color: #333; border: 1px solid #ddd; }
-        .dl-btn-gray:hover { background: #f1f1f1; }
+        .dl-btn:active { transform: scale(0.99); }
+        .dl-btn-gray { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
+        .dl-btn-gray:hover { background: #e2e6ea; border-color: #ccc; }
         .dl-btn-green { background: #28a745; color: white; border: 1px solid #218838; }
         .dl-btn-green:hover { background: #218838; }
         .dl-btn-purple { background: #6f42c1; color: white; border: 1px solid #5a32a3; }
         .dl-btn-purple:hover { background: #5a32a3; }
+        .file-size { font-size: 12px; opacity: 0.9; font-weight: normal; }
 
         .error-box {
             background: #fff5f5; color: #c53030; padding: 12px; border: 1px solid #feb2b2;
-            border-radius: 6px; margin-top: 20px; display: none; font-size: 14px;
+            border-radius: 6px; margin-top: 20px; display: none; font-size: 14px; text-align: center;
         }
 
-        /* --- SEO CONTENT --- */
+        /* --- SEO CONTENT STYLE --- */
         .seo-content {
             margin-top: 50px;
             padding-top: 30px;
             border-top: 1px solid #eee;
             color: #444;
             font-size: 15px;
-            text-align: left; /* Teks SEO rata kiri */
         }
         .seo-content h2 { font-size: 20px; margin-bottom: 15px; color: #222; margin-top: 30px; }
         .seo-content h3 { font-size: 18px; margin-bottom: 10px; color: #333; margin-top: 20px; }
-        .seo-content p, .seo-content ul, .seo-content ol { margin-bottom: 15px; }
-        .seo-content ul, .seo-content ol { padding-left: 20px; }
+        .seo-content p { margin-bottom: 15px; text-align: justify; }
+        .seo-content ul { margin-bottom: 15px; padding-left: 20px; }
+        .seo-content li { margin-bottom: 8px; }
 
         @media (max-width: 600px) {
             .input-group { flex-direction: column; }
             .btn-primary { width: 100%; }
+            .video-info { flex-direction: column; align-items: center; text-align: center; }
+            .thumb-img { width: 100%; height: auto; max-height: 200px; }
             .container { padding: 0; }
-            .main-content { border: none; box-shadow: none; border-radius: 0; }
+            .main-content { border: none; box-shadow: none; background: transparent; }
         }
     </style>
 </head>
@@ -172,14 +163,11 @@
 
     <div class="container">
         <main class="main-content">
-            
-            <img src="/static/logo.png" alt="Logo Downloader" class="site-logo">
-            
             <h1>Video Downloader All-in-One</h1>
             <p class="subtitle">Download Video YouTube, TikTok Tanpa Watermark & Facebook HD</p>
 
             <div class="input-group">
-                <input type="text" id="videoUrl" placeholder="Tempel URL video di sini...">
+                <input type="text" id="videoUrl" placeholder="Tempel URL video (YouTube, TikTok, FB)...">
                 <button id="btnDownload" class="btn-primary" onclick="downloadVideo()">Download</button>
             </div>
 
@@ -204,22 +192,44 @@
             </div>
 
             <article class="seo-content">
-                <h2>Pengunduh Video Online Gratis & Cepat</h2>
-                <p>Selamat datang di <strong>Video Downloader</strong>, alat terbaik untuk menyimpan video dari <strong>YouTube</strong>, <strong>TikTok</strong>, dan <strong>Facebook</strong>. Kami menyediakan layanan unduhan berkualitas tinggi (HD, Full HD, 4K) tanpa biaya.</p>
+                <h2>Pengunduh Video Online Terbaik, Gratis & Cepat</h2>
+                <p>Selamat datang di <strong>Video Downloader</strong>, solusi terbaik untuk mengunduh video dari berbagai platform media sosial populer. Alat kami dirancang untuk membantu Anda menyimpan video favorit dari <strong>YouTube</strong>, <strong>TikTok</strong>, dan <strong>Facebook</strong> langsung ke perangkat Anda (Android, iPhone, PC, atau Tablet) dengan kualitas terbaik.</p>
 
-                <h3>Cara Menggunakan:</h3>
-                <ol>
-                    <li>Salin tautan (link) video dari aplikasi YouTube/TikTok/FB.</li>
-                    <li>Tempel tautan pada kolom di atas.</li>
-                    <li>Klik tombol "Download" dan pilih format MP4 atau MP3.</li>
+                <h3>Mengapa Menggunakan Downloader Kami?</h3>
+                <ul>
+                    <li><strong>Download TikTok Tanpa Watermark:</strong> Unduh video TikTok bersih tanpa logo atau ID pengguna yang mengganggu.</li>
+                    <li><strong>Kualitas HD & 4K:</strong> Kami mendukung unduhan video YouTube dalam resolusi 1080p, 720p, hingga 4K jika tersedia.</li>
+                    <li><strong>Konversi ke MP3:</strong> Ubah video musik YouTube menjadi file audio MP3 dengan satu klik.</li>
+                    <li><strong>Aman & Gratis:</strong> Tidak perlu registrasi, tidak perlu instal aplikasi tambahan. 100% Gratis selamanya.</li>
+                </ul>
+
+                <h2>Cara Download Video YouTube, TikTok, dan Facebook</h2>
+                <p>Proses pengunduhan sangat mudah dan cepat. Ikuti langkah-langkah berikut:</p>
+                <ol style="margin-left: 20px; margin-bottom: 20px;">
+                    <li>Buka aplikasi YouTube, TikTok, atau Facebook.</li>
+                    <li>Cari video yang ingin Anda unduh, lalu klik tombol <strong>Share (Bagikan)</strong> dan pilih <strong>Copy Link (Salin Tautan)</strong>.</li>
+                    <li>Kembali ke website ini, lalu <strong>Tempel (Paste)</strong> tautan tersebut pada kolom di atas.</li>
+                    <li>Klik tombol <strong>Download</strong> dan tunggu beberapa detik.</li>
+                    <li>Pilih kualitas video (MP4) atau audio (MP3) yang Anda inginkan, dan unduhan akan dimulai otomatis.</li>
                 </ol>
 
-                <h3>Fitur Utama:</h3>
+                <h3>Fitur Unggulan</h3>
+                <p>Website ini adalah alternatif terbaik untuk layanan seperti <em>SaveFrom</em>, <em>Snaptik</em>, <em>SSYouTube</em>, dan <em>Y2Mate</em>. Kami mendukung:</p>
                 <ul>
-                    <li><strong>TikTok No Watermark:</strong> Unduh video TikTok bersih tanpa logo.</li>
-                    <li><strong>YouTube to MP3:</strong> Ubah video musik menjadi lagu dengan mudah.</li>
-                    <li><strong>Facebook Downloader:</strong> Simpan video dari FB Lite maupun FB seluler.</li>
+                    <li><strong>YouTube Downloader:</strong> Simpan video klip, tutorial, atau vlog untuk ditonton offline.</li>
+                    <li><strong>Facebook Video Downloader:</strong> Unduh video dari feed, grup, atau halaman Facebook.</li>
+                    <li><strong>TikTok Downloader:</strong> Simpan video viral TikTok tanpa watermark (no watermark) kualitas jernih.</li>
                 </ul>
+
+                <h3>Pertanyaan Umum (FAQ)</h3>
+                <p><strong>Apakah layanan ini gratis?</strong><br>
+                Ya, layanan ini 100% gratis tanpa batasan jumlah unduhan.</p>
+                
+                <p><strong>Di mana video tersimpan?</strong><br>
+                Video biasanya tersimpan di folder "Downloads" pada galeri HP atau komputer Anda.</p>
+
+                <p><strong>Apakah bisa download video YouTube Shorts?</strong><br>
+                Tentu saja! Kami mendukung penuh unduhan YouTube Shorts, Video Panjang, Reels FB, dan Video TikTok.</p>
             </article>
 
         </main>
